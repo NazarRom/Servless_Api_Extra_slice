@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json;
 using Servless_Api_Extra_slice.Data;
 using Servless_Api_Extra_slice.Helpers;
+using Servless_Api_Extra_slice.Models;
 using Servless_Api_Extra_slice.Repository;
 
 namespace Servless_Api_Extra_slice;
@@ -18,7 +20,17 @@ public class Startup
     // This method gets called by the runtime. Use this method to add services to the container
     public void ConfigureServices(IServiceCollection services)
     {
-        string connectionString = Configuration.GetConnectionString("AWSConnection");
+        //string connectionString = this.Configuration.GetConnectionString("Conciertos");
+        string miSecreto = HelperSecretManager.GetSecretAsync().Result;
+
+        //PODEMOS DAR FORMATO A NUESTRO SECRETO
+        KeyModel model = JsonConvert.DeserializeObject<KeyModel>(miSecreto);
+
+        //SI ESTAMOS EN UNA APP MAS COMPLEJA DONDE NECESITAMOS RECUPERAR MAS 
+        //DATOS Y UTILIZARLOS EN DISTINTAS CLASES, AL ESTILO DE IConfiguration
+        services.AddSingleton<KeyModel>(x => model).BuildServiceProvider();
+
+        string connectionString = model.Connection;
         services.AddDbContext<RestauranteContext>(options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
         services.AddTransient<RepositoryRestaurante>();
         //token
